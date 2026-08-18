@@ -53,3 +53,36 @@ export function readVehicleDisk(rawBytes: Uint8Array): VehicleDiskResult {
     vin: vinMatch ? vinMatch[1] : null,
   };
 }
+
+function toHex(bytes: Uint8Array): string {
+  const lines: string[] = [];
+  for (let i = 0; i < bytes.length; i += 16) {
+    const chunk = bytes.subarray(i, i + 16);
+    const hex = Array.from(chunk, (b) => b.toString(16).padStart(2, '0')).join(' ');
+    const offset = i.toString(16).padStart(4, '0');
+    lines.push(`${offset}  ${hex}`);
+  }
+  return lines.join('\n');
+}
+
+/**
+ * Full, untruncated dump of a scanned disk payload — used only to capture
+ * real-world samples so the actual field layout can be reverse engineered
+ * (there is no public spec for this barcode, unlike the driver's licence).
+ */
+export function debugDumpDisk(rawBytes: Uint8Array): string {
+  const ratio = printableRatio(rawBytes);
+  const rawText = toText(rawBytes);
+  const vinMatch = rawText.match(VIN_PATTERN);
+  return [
+    `Length: ${rawBytes.length} bytes`,
+    `Printable ratio: ${(ratio * 100).toFixed(0)}%`,
+    `VIN match: ${vinMatch ? vinMatch[1] : '(none)'}`,
+    '',
+    '--- Text ---',
+    rawText,
+    '',
+    '--- Hex ---',
+    toHex(rawBytes),
+  ].join('\n');
+}
