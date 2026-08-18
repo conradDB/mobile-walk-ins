@@ -72,6 +72,8 @@ a { color: var(--blue); }
   z-index: 40;
 }
 .bar .logo { height: 30px; width: auto; max-width: 140px; object-fit: contain; display: block; flex-shrink: 0; }
+.bar.logo-only { justify-content: center; padding: 18px 24px; }
+.bar.logo-only .logo { height: 44px; max-width: 220px; }
 .bar-title .eyebrow {
   font-size: 11px;
   letter-spacing: .14em;
