@@ -243,7 +243,7 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
       {scanMode === 'license' && (
         <BarcodeScanner
           title="Scan Driver's License"
-          hint="Move in close so the barcode fills the width of the frame, hold steady, then tap Scan."
+          hint="Move in close so the barcode fills the width of the frame and hold steady — it scans automatically."
           onResult={handleLicenseScan}
           onClose={() => setScanMode(null)}
         />
@@ -251,7 +251,7 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
       {scanMode === 'disk' && (
         <BarcodeScanner
           title="Scan License Disk"
-          hint="Hold the vehicle license disk barcode steady inside the frame."
+          hint="Hold the vehicle license disk barcode steady inside the frame — it scans automatically."
           onResult={handleDiskScan}
           onClose={() => setScanMode(null)}
         />
