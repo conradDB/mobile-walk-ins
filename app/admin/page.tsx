@@ -254,13 +254,15 @@ export default function AdminPage() {
                     Reset to CMS
                   </button>
                 )}
-                <input
-                  className="color-swatch"
-                  type="color"
-                  title="Brand colour"
-                  value={d.primary_color || '#31459C'}
-                  onChange={(e) => saveColor(d.id, 'primary_color', e.target.value)}
-                />
+                <span className="color-swatch-wrap">
+                  <input
+                    className="color-swatch"
+                    type="color"
+                    title="Brand colour"
+                    value={d.primary_color || '#31459C'}
+                    onChange={(e) => saveColor(d.id, 'primary_color', e.target.value)}
+                  />
+                </span>
                 <button className="row-btn primary" onClick={() => copyLink(d)}>
                   Copy Link
                 </button>
