@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { IScannerControls } from '@zxing/browser';
+import type { BrowserPDF417Reader } from '@zxing/browser';
 
 export default function BarcodeScanner({
   title,
@@ -15,8 +15,11 @@ export default function BarcodeScanner({
   onClose: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const controlsRef = useRef<IScannerControls | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const readerRef = useRef<BrowserPDF417Reader | null>(null);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [capturing, setCapturing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,44 +28,26 @@ export default function BarcodeScanner({
       try {
         const { BrowserPDF417Reader } = await import('@zxing/browser');
         const { DecodeHintType } = await import('@zxing/library');
-        // TRY_HARDER makes each decode attempt do the extra work (multiple
-        // scan lines, row stitching) a dense real-world PDF417 needs — off
-        // by default because it's slower per-frame, but this is a deliberate
-        // "scan this one barcode" flow, not a live video feed, so it's worth it.
         const hints = new Map<any, any>([[DecodeHintType.TRY_HARDER, true]]);
-        const reader = new BrowserPDF417Reader(hints, { delayBetweenScanAttempts: 100 });
-        const controls = await reader.decodeFromConstraints(
-          {
-            audio: false,
-            video: {
-              facingMode: { ideal: 'environment' },
-              // Full HD balances legibility against decode speed — 4K frames
-              // are too heavy for this JS decoder to process many times a
-              // second, which cuts the chances of catching a sharp, aligned
-              // frame far more than the extra pixels help.
-              width: { ideal: 1920 },
-              height: { ideal: 1080 },
-              advanced: [{ focusMode: 'continuous' } as unknown as MediaTrackConstraintSet],
-            },
+        readerRef.current = new BrowserPDF417Reader(hints);
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            advanced: [{ focusMode: 'continuous' } as unknown as MediaTrackConstraintSet],
           },
-          videoRef.current ?? undefined,
-          (result, err) => {
-            if (cancelled) return;
-            if (result) {
-              const bytes = result.getRawBytes();
-              if (bytes && bytes.length > 0) {
-                controlsRef.current?.stop();
-                onResult(bytes);
-              }
-            }
-            // NotFoundException fires on essentially every frame with no
-            // barcode in view — that's expected, not a real error.
-          }
-        );
+        });
         if (cancelled) {
-          controls.stop();
-        } else {
-          controlsRef.current = controls;
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => {});
         }
       } catch (e: any) {
         if (!cancelled) {
@@ -79,9 +64,39 @@ export default function BarcodeScanner({
 
     return () => {
       cancelled = true;
-      controlsRef.current?.stop();
+      streamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [onResult]);
+  }, []);
+
+  function captureAndDecode() {
+    const video = videoRef.current;
+    const reader = readerRef.current;
+    if (!video || !reader || video.videoWidth === 0) return;
+
+    setCapturing(true);
+    setMessage('');
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('canvas unsupported');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const result = reader.decodeFromCanvas(canvas);
+      const bytes = result.getRawBytes();
+      if (bytes && bytes.length > 0) {
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+        onResult(bytes);
+        return;
+      }
+      setMessage('No barcode found in that frame — align it and try again.');
+    } catch {
+      setMessage('No barcode found in that frame — align it and try again.');
+    } finally {
+      setCapturing(false);
+    }
+  }
 
   return (
     <div className="scanner-overlay">
@@ -94,6 +109,12 @@ export default function BarcodeScanner({
         </div>
         <button className="row-btn" onClick={onClose}>
           Cancel
+        </button>
+      </div>
+      <div className="scanner-bottombar">
+        {message && <div className="scanner-message">{message}</div>}
+        <button className="scanner-capture" onClick={captureAndDecode} disabled={capturing || !!error}>
+          {capturing ? 'Reading…' : 'Tap to Scan'}
         </button>
       </div>
       {error && <div className="msg err scanner-error">{error}</div>}
