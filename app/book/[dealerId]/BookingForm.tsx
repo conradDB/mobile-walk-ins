@@ -243,7 +243,7 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
       {scanMode === 'license' && (
         <BarcodeScanner
           title="Scan Driver's License"
-          hint="Hold the barcode on the back of the license steady inside the frame."
+          hint="Move in close so the barcode fills the width of the frame, hold steady, then tap Scan."
           onResult={handleLicenseScan}
           onClose={() => setScanMode(null)}
         />

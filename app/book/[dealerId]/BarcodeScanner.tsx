@@ -28,8 +28,15 @@ export default function BarcodeScanner({
           audio: false,
           video: {
             facingMode: { ideal: 'environment' },
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
+            // Now that decoding is a single deliberate tap (zxing-wasm, not a
+            // continuous per-frame loop), there's no frame-rate budget to
+            // protect — ask for the camera's max resolution. A dense PDF417
+            // like a driver's license packs far more narrow bars across the
+            // frame than a typical barcode, so more pixels directly buys
+            // more pixels-per-bar, which is what actually decides whether
+            // it resolves at all.
+            width: { ideal: 4096 },
+            height: { ideal: 2304 },
             advanced: [{ focusMode: 'continuous' } as unknown as MediaTrackConstraintSet],
           },
         });
