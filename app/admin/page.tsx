@@ -115,18 +115,27 @@ export default function AdminPage() {
     }
   }
 
-  async function removeLogo(id: string) {
-    setUploadingId(id);
+  async function resetBranding(d: Dealer) {
+    setUploadingId(d.id);
     try {
-      const res = await fetch(`/api/dealers/${id}/logo`, { method: 'DELETE' });
-      if (!res.ok) {
-        toast('Could not remove logo');
+      const [logoRes, colorRes] = await Promise.all([
+        d.logo_url ? fetch(`/api/dealers/${d.id}/logo`, { method: 'DELETE' }) : null,
+        d.primary_color
+          ? fetch(`/api/dealers/${d.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ primary_color: null }),
+            })
+          : null,
+      ]);
+      if ((logoRes && !logoRes.ok) || (colorRes && !colorRes.ok)) {
+        toast('Could not reset to CMS branding');
         return;
       }
-      setDealers((prev) => prev.map((d) => (d.id === id ? { ...d, logo_url: null } : d)));
-      toast('Logo removed');
+      setDealers((prev) => prev.map((x) => (x.id === d.id ? { ...x, logo_url: null, primary_color: null } : x)));
+      toast('Reset to CMS branding');
     } catch (e) {
-      toast('Network error while removing logo');
+      toast('Network error while resetting branding');
     } finally {
       setUploadingId(null);
     }
@@ -249,8 +258,8 @@ export default function AdminPage() {
                 >
                   {uploadingId === d.id ? 'Uploading…' : d.logo_url ? 'Change Logo' : 'Upload Logo'}
                 </button>
-                {d.logo_url && (
-                  <button className="row-btn" disabled={uploadingId === d.id} onClick={() => removeLogo(d.id)}>
+                {(d.logo_url || d.primary_color) && (
+                  <button className="row-btn" disabled={uploadingId === d.id} onClick={() => resetBranding(d)}>
                     Reset to CMS
                   </button>
                 )}

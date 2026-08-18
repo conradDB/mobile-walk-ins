@@ -268,9 +268,13 @@ input.field-error { border-color: var(--red); box-shadow: 0 0 0 4px rgba(253, 69
 
 /* input[type=color] ignores width/height set directly on it in some
    browsers (renders its native control at an intrinsic size instead).
-   Clip it to an exact box the same way the date input is clipped. */
+   Clip it to an exact circle the same way the date input is clipped
+   for its Safari corner bug. Circular reads as a colour-picker dot
+   regardless of how the chosen colour contrasts with a square border,
+   and sits better next to the fully-rounded pill buttons either side. */
 .color-swatch-wrap {
-  width: 30px; height: 30px; border-radius: 6px; border: 1.5px solid var(--border);
+  width: 27px; height: 27px; border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgba(46, 46, 46, .12), 0 0 0 1.5px var(--border);
   overflow: hidden; flex-shrink: 0; cursor: pointer;
 }
 .color-swatch {
