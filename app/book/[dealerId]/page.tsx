@@ -14,6 +14,8 @@ export default function KioskPage({ params }: { params: { dealerId: string } }) 
 
   const [dealerName, setDealerName] = useState('');
   const [dealerLogo, setDealerLogo] = useState<string | null>(null);
+  const [primaryColor, setPrimaryColor] = useState<string | null>(null);
+  const [secondaryColor, setSecondaryColor] = useState<string | null>(null);
 
   const [title, setTitle] = useState('Mr');
   const [firstName, setFirstName] = useState('');
@@ -38,6 +40,8 @@ export default function KioskPage({ params }: { params: { dealerId: string } }) 
         if (data?.dealer) {
           setDealerName(data.dealer.name);
           setDealerLogo(data.dealer.logo_url || null);
+          setPrimaryColor(data.dealer.primary_color || null);
+          setSecondaryColor(data.dealer.secondary_color || null);
         }
       })
       .catch(() => {});
@@ -101,11 +105,20 @@ export default function KioskPage({ params }: { params: { dealerId: string } }) 
     }
   }
 
+  const theme: React.CSSProperties = {};
+  if (primaryColor) {
+    (theme as Record<string, string>)['--blue'] = primaryColor;
+    (theme as Record<string, string>)['--blue-dark'] = primaryColor;
+  }
+  if (secondaryColor) {
+    (theme as Record<string, string>)['--turquoise'] = secondaryColor;
+  }
+
   return (
-    <>
+    <div style={theme}>
       <Header
-        eyebrow="Counter Kiosk"
         title="Workshop Booking"
+        eyebrow=""
         logo={dealerLogo || undefined}
         logoAlt={dealerLogo ? dealerName : 'CMS Systems'}
       />
@@ -176,7 +189,9 @@ export default function KioskPage({ params }: { params: { dealerId: string } }) 
               </div>
               <div className="field full">
                 <label>Date</label>
-                <input value={date} onChange={(e) => setDate(e.target.value)} type="date" />
+                <div className="date-field-clip">
+                  <input value={date} onChange={(e) => setDate(e.target.value)} type="date" />
+                </div>
               </div>
             </div>
 
@@ -199,6 +214,6 @@ export default function KioskPage({ params }: { params: { dealerId: string } }) 
 
         <div className="brand-footer">CMS Systems — Smarter tools. Easy integration. Better results.</div>
       </div>
-    </>
+    </div>
   );
 }

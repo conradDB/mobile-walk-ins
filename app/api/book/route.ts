@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '../../../lib/supabaseAdmin';
+import { isUuid } from '../../../lib/dealers';
 
 const CMS_API_URL =
   'https://aws-prod-workshop-api.cmscloud.co.za/api/Workshop/CreateUnconfirmedBooking';
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
   const { data: dealer, error } = await supabaseAdmin
     .from('dealers')
     .select('dealer_setting_key,name')
-    .eq('id', dealerId)
+    .eq(isUuid(dealerId) ? 'id' : 'slug', dealerId)
     .single();
 
   if (error || !dealer) {

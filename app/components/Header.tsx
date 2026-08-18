@@ -17,7 +17,7 @@ export default function Header({
       <div className="bar">
         <img src={logo || '/cms-logo.png'} alt={logoAlt || 'CMS Systems'} className="logo" />
         <div className="bar-title">
-          <div className="eyebrow">{eyebrow}</div>
+          {eyebrow && <div className="eyebrow">{eyebrow}</div>}
           <h1>{title}</h1>
         </div>
         {right && <div className="bar-right">{right}</div>}

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '../../../lib/supabaseAdmin';
+import { slugify } from '../../../lib/dealers';
 
 export async function GET() {
   const supabaseAdmin = getSupabaseAdmin();
   const { data, error } = await supabaseAdmin
     .from('dealers')
-    .select('id,name,logo_url,created_at')
+    .select('id,name,slug,logo_url,primary_color,secondary_color,created_at')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -27,14 +28,23 @@ export async function POST(req: Request) {
     );
   }
 
-  const { data, error } = await supabaseAdmin
-    .from('dealers')
-    .insert({ name, dealer_setting_key: dealerSettingKey })
-    .select('id,name,created_at')
-    .single();
+  const base = slugify(name);
+  let lastError: { message: string } | null = null;
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const slug = attempt === 0 ? base : `${base}-${Math.random().toString(36).slice(2, 6)}`;
+    const { data, error } = await supabaseAdmin
+      .from('dealers')
+      .insert({ name, dealer_setting_key: dealerSettingKey, slug })
+      .select('id,name,slug,created_at')
+      .single();
+
+    if (!error) {
+      return NextResponse.json({ dealer: data });
+    }
+    lastError = error;
+    if (error.code !== '23505') break; // not a unique-violation, don't retry
   }
-  return NextResponse.json({ dealer: data });
+
+  return NextResponse.json({ error: lastError?.message || 'Could not create dealer' }, { status: 500 });
 }

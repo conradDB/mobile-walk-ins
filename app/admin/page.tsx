@@ -3,7 +3,15 @@
 import { useEffect, useRef, useState } from 'react';
 import Header from '../components/Header';
 
-type Dealer = { id: string; name: string; logo_url: string | null; created_at: string };
+type Dealer = {
+  id: string;
+  name: string;
+  slug: string | null;
+  logo_url: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+  created_at: string;
+};
 
 export default function AdminPage() {
   const [dealers, setDealers] = useState<Dealer[]>([]);
@@ -16,6 +24,7 @@ export default function AdminPage() {
   const [toastMsg, setToastMsg] = useState('');
   const [origin, setOrigin] = useState('');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
@@ -123,18 +132,40 @@ export default function AdminPage() {
     }
   }
 
-  function linkFor(id: string) {
-    return `${origin}/book/${id}`;
+  async function saveColor(id: string, field: 'primary_color' | 'secondary_color', value: string) {
+    try {
+      const res = await fetch(`/api/dealers/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast(data.error || 'Could not save colour');
+        return;
+      }
+      setDealers((prev) => prev.map((d) => (d.id === id ? { ...d, ...data.dealer } : d)));
+    } catch (e) {
+      toast('Network error while saving colour');
+    }
   }
 
-  async function copyLink(id: string) {
+  function linkFor(d: Dealer) {
+    return `${origin}/book/${d.slug || d.id}`;
+  }
+
+  async function copyLink(d: Dealer) {
     try {
-      await navigator.clipboard.writeText(linkFor(id));
+      await navigator.clipboard.writeText(linkFor(d));
       toast('Link copied');
     } catch (e) {
       toast('Copy failed — select and copy manually');
     }
   }
+
+  const filteredDealers = dealers.filter((d) =>
+    d.name.toLowerCase().includes(query.trim().toLowerCase())
+  );
 
   return (
     <>
@@ -176,9 +207,20 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {dealers.length > 0 && (
+          <div className="search-field">
+            <span className="search-icon">⌕</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search dealers by name…"
+            />
+          </div>
+        )}
+
         <div className="dealer-list">
           {!loading &&
-            dealers.map((d) => (
+            filteredDealers.map((d) => (
               <div className="dealer-row" key={d.id}>
                 <img
                   className="dealer-logo"
@@ -187,7 +229,7 @@ export default function AdminPage() {
                 />
                 <div className="info">
                   <div className="name">{d.name}</div>
-                  <div className="link mono">{linkFor(d.id)}</div>
+                  <div className="link mono">{linkFor(d)}</div>
                 </div>
                 <input
                   type="file"
@@ -212,10 +254,26 @@ export default function AdminPage() {
                     Reset to CMS
                   </button>
                 )}
-                <button className="row-btn primary" onClick={() => copyLink(d.id)}>
+                <div className="colors">
+                  <input
+                    className="color-swatch"
+                    type="color"
+                    title="Primary colour"
+                    value={d.primary_color || '#31459C'}
+                    onChange={(e) => saveColor(d.id, 'primary_color', e.target.value)}
+                  />
+                  <input
+                    className="color-swatch"
+                    type="color"
+                    title="Secondary colour"
+                    value={d.secondary_color || '#00AEED'}
+                    onChange={(e) => saveColor(d.id, 'secondary_color', e.target.value)}
+                  />
+                </div>
+                <button className="row-btn primary" onClick={() => copyLink(d)}>
                   Copy Link
                 </button>
-                <a className="row-btn" href={`/book/${d.id}`} target="_blank" rel="noreferrer">
+                <a className="row-btn" href={`/book/${d.slug || d.id}`} target="_blank" rel="noreferrer">
                   Open
                 </a>
                 <button className="row-btn danger" onClick={() => removeDealer(d.id)}>
@@ -229,6 +287,10 @@ export default function AdminPage() {
           <div className="empty">
             No dealers configured yet — add one above to generate its walk-in kiosk link.
           </div>
+        )}
+
+        {!loading && dealers.length > 0 && filteredDealers.length === 0 && (
+          <div className="empty">No dealers match &quot;{query}&quot;.</div>
         )}
 
         <div className="note">

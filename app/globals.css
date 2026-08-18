@@ -148,6 +148,25 @@ input::placeholder { color: #9A9A9A; font-style: italic; }
 input.field-error { border-color: var(--red); box-shadow: 0 0 0 4px rgba(253, 69, 69, .1); }
 .hint { font-size: 12px; color: var(--grey); margin-top: 6px; line-height: 1.5; }
 
+/* Safari renders native date/time input chrome without respecting the
+   input's own border-radius/overflow, so the widget can visually poke
+   past rounded corners. Move the border to a clipping wrapper instead. */
+.date-field-clip {
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  overflow: hidden;
+  transition: border-color .15s var(--ease), box-shadow .15s var(--ease);
+}
+.date-field-clip:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px rgba(49, 69, 156, .12);
+}
+.date-field-clip input[type="date"] {
+  border: none;
+  border-radius: 0;
+  box-shadow: none !important;
+}
+
 .cta {
   width: 100%;
   margin-top: 30px;
@@ -236,7 +255,21 @@ input.field-error { border-color: var(--red); box-shadow: 0 0 0 4px rgba(253, 69
 .admin-form button:hover { background: var(--blue-dark); }
 .admin-form button:disabled { opacity: .6; cursor: not-allowed; }
 
-.dealer-list { margin-top: 28px; display: flex; flex-direction: column; gap: 10px; }
+.search-field { position: relative; margin-top: 28px; }
+.search-field input { padding-left: 40px; }
+.search-field .search-icon {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  color: var(--grey-mid); font-size: 15px; pointer-events: none;
+}
+
+.dealer-list { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.dealer-row .colors { display: flex; align-items: center; gap: 6px; }
+.color-swatch {
+  width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid var(--border);
+  padding: 0; cursor: pointer; background: none;
+}
+.color-swatch::-webkit-color-swatch-wrapper { padding: 3px; }
+.color-swatch::-webkit-color-swatch { border-radius: 5px; border: none; }
 .dealer-row {
   display: flex;
   align-items: center;
