@@ -132,7 +132,7 @@ export default function AdminPage() {
     }
   }
 
-  async function saveColor(id: string, field: 'primary_color' | 'secondary_color', value: string) {
+  async function saveColor(id: string, field: 'primary_color', value: string) {
     try {
       const res = await fetch(`/api/dealers/${id}`, {
         method: 'PATCH',
@@ -229,7 +229,7 @@ export default function AdminPage() {
                 />
                 <div className="info">
                   <div className="name">{d.name}</div>
-                  <div className="link mono">{linkFor(d)}</div>
+                  <div className="link mono" title={linkFor(d)}>{linkFor(d)}</div>
                 </div>
                 <input
                   type="file"
@@ -254,22 +254,13 @@ export default function AdminPage() {
                     Reset to CMS
                   </button>
                 )}
-                <div className="colors">
-                  <input
-                    className="color-swatch"
-                    type="color"
-                    title="Primary colour"
-                    value={d.primary_color || '#31459C'}
-                    onChange={(e) => saveColor(d.id, 'primary_color', e.target.value)}
-                  />
-                  <input
-                    className="color-swatch"
-                    type="color"
-                    title="Secondary colour"
-                    value={d.secondary_color || '#00AEED'}
-                    onChange={(e) => saveColor(d.id, 'secondary_color', e.target.value)}
-                  />
-                </div>
+                <input
+                  className="color-swatch"
+                  type="color"
+                  title="Brand colour"
+                  value={d.primary_color || '#31459C'}
+                  onChange={(e) => saveColor(d.id, 'primary_color', e.target.value)}
+                />
                 <button className="row-btn primary" onClick={() => copyLink(d)}>
                   Copy Link
                 </button>

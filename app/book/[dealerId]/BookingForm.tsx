@@ -43,12 +43,24 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
     setResult(null);
   }
 
+  const requiredFields = {
+    title,
+    firstName,
+    lastName,
+    contactNumber,
+    make,
+    model,
+    registration,
+    odoMeter,
+    briefDescription,
+    date,
+  };
+  const isComplete = Object.values(requiredFields).every((v) => v.trim() !== '');
+
   async function submit() {
     setErrMsg('');
-    const required = { firstName, lastName, contactNumber, make, registration, briefDescription, date };
-    const missing = Object.entries(required).filter(([, v]) => !v);
-    if (missing.length) {
-      setErrMsg('Please fill in all required fields before booking the vehicle in.');
+    if (!isComplete) {
+      setErrMsg('Please fill in all fields before booking the vehicle in.');
       return;
     }
 
@@ -159,7 +171,7 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
             </div>
           </div>
 
-          <button className="cta" onClick={submit} disabled={submitting}>
+          <button className="cta" onClick={submit} disabled={submitting || !isComplete}>
             {submitting ? 'Booking…' : 'Book Vehicle In'}
           </button>
           {errMsg && <div className="msg err">{errMsg}</div>}
