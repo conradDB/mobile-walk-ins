@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { BrowserPDF417Reader } from '@zxing/browser';
 
 export default function BarcodeScanner({
   title,
@@ -16,7 +15,6 @@ export default function BarcodeScanner({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const readerRef = useRef<BrowserPDF417Reader | null>(null);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [capturing, setCapturing] = useState(false);
@@ -26,11 +24,6 @@ export default function BarcodeScanner({
 
     (async () => {
       try {
-        const { BrowserPDF417Reader } = await import('@zxing/browser');
-        const { DecodeHintType } = await import('@zxing/library');
-        const hints = new Map<any, any>([[DecodeHintType.TRY_HARDER, true]]);
-        readerRef.current = new BrowserPDF417Reader(hints);
-
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: false,
           video: {
@@ -68,10 +61,9 @@ export default function BarcodeScanner({
     };
   }, []);
 
-  function captureAndDecode() {
+  async function captureAndDecode() {
     const video = videoRef.current;
-    const reader = readerRef.current;
-    if (!video || !reader || video.videoWidth === 0) return;
+    if (!video || video.videoWidth === 0) return;
 
     setCapturing(true);
     setMessage('');
@@ -82,9 +74,16 @@ export default function BarcodeScanner({
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('canvas unsupported');
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      const result = reader.decodeFromCanvas(canvas);
-      const bytes = result.getRawBytes();
+      const { readBarcodes } = await import('zxing-wasm/reader');
+      const results = await readBarcodes(imageData, {
+        formats: ['PDF417'],
+        tryHarder: true,
+        maxNumberOfSymbols: 1,
+      });
+
+      const bytes = results[0]?.bytes;
       if (bytes && bytes.length > 0) {
         streamRef.current?.getTracks().forEach((t) => t.stop());
         onResult(bytes);
