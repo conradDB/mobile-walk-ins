@@ -24,17 +24,24 @@ export default function BarcodeScanner({
     (async () => {
       try {
         const { BrowserPDF417Reader } = await import('@zxing/browser');
-        const reader = new BrowserPDF417Reader();
+        const { DecodeHintType } = await import('@zxing/library');
+        // TRY_HARDER makes each decode attempt do the extra work (multiple
+        // scan lines, row stitching) a dense real-world PDF417 needs — off
+        // by default because it's slower per-frame, but this is a deliberate
+        // "scan this one barcode" flow, not a live video feed, so it's worth it.
+        const hints = new Map<any, any>([[DecodeHintType.TRY_HARDER, true]]);
+        const reader = new BrowserPDF417Reader(hints, { delayBetweenScanAttempts: 100 });
         const controls = await reader.decodeFromConstraints(
           {
             audio: false,
             video: {
               facingMode: { ideal: 'environment' },
-              // PDF417 is dense — a low-res stream (browsers often default to
-              // ~640x480) stretched across a large preview looks blurry and
-              // won't decode. Ask for the highest resolution the camera has.
-              width: { ideal: 3840 },
-              height: { ideal: 2160 },
+              // Full HD balances legibility against decode speed — 4K frames
+              // are too heavy for this JS decoder to process many times a
+              // second, which cuts the chances of catching a sharp, aligned
+              // frame far more than the extra pixels help.
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
               advanced: [{ focusMode: 'continuous' } as unknown as MediaTrackConstraintSet],
             },
           },
