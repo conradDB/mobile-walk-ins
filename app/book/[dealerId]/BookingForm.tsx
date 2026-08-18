@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import BarcodeScanner from './BarcodeScanner';
+import { scanDriverLicence } from '../../../lib/sadl';
+import { readVehicleDisk } from '../../../lib/vehicleDisk';
 
 const DEFAULT_TIME = '08:00';
 
@@ -24,9 +27,17 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
   const [errMsg, setErrMsg] = useState('');
   const [result, setResult] = useState<{ bookingNumber: number; message: string } | null>(null);
 
+  const [scanMode, setScanMode] = useState<'license' | 'disk' | null>(null);
+  const [toastMsg, setToastMsg] = useState('');
+
   useEffect(() => {
     setDate(defaultDate());
   }, []);
+
+  function toast(msg: string) {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 2600);
+  }
 
   function resetForm() {
     setTitle('Mr');
@@ -41,6 +52,35 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
     setDate(defaultDate());
     setErrMsg('');
     setResult(null);
+  }
+
+  function handleLicenseScan(rawBytes: Uint8Array) {
+    setScanMode(null);
+    const holder = scanDriverLicence(rawBytes);
+    if (!holder) {
+      toast("Could not read that license — try again or enter the name manually");
+      return;
+    }
+    if (holder.surname) setLastName(holder.surname);
+    if (holder.initials) setFirstName(holder.initials);
+    toast('License scanned — name filled in (initials only, no full first name on SA licenses)');
+  }
+
+  function handleDiskScan(rawBytes: Uint8Array) {
+    setScanMode(null);
+    const diskResult = readVehicleDisk(rawBytes);
+    const extras: string[] = [];
+    if (diskResult.vin) extras.push(`VIN: ${diskResult.vin}`);
+    if (diskResult.isPlainText) {
+      const snippet = diskResult.rawText.replace(/\s+/g, ' ').trim().slice(0, 120);
+      if (snippet && !diskResult.vin) extras.push(`Disk data: ${snippet}`);
+    }
+    if (extras.length === 0) {
+      toast('Could not automatically read the disk — enter vehicle details manually');
+      return;
+    }
+    setBriefDescription((prev) => (prev ? `${prev} — ${extras.join(', ')}` : extras.join(', ')));
+    toast('Vehicle disk scanned — details added to description');
   }
 
   const requiredFields = {
@@ -103,6 +143,11 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
       {!result && (
         <div className="card">
           <div className="section-label">Client</div>
+          <div className="scan-row">
+            <button className="scan-btn" onClick={() => setScanMode('license')}>
+              ⎙ Scan Driver&apos;s License
+            </button>
+          </div>
           <div className="grid">
             <div className="field">
               <label>Title</label>
@@ -129,6 +174,11 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
           </div>
 
           <div className="section-label">Vehicle</div>
+          <div className="scan-row">
+            <button className="scan-btn" onClick={() => setScanMode('disk')}>
+              ⎙ Scan License Disk
+            </button>
+          </div>
           <div className="grid">
             <div className="field">
               <label>Make</label>
@@ -189,6 +239,25 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
       )}
 
       <div className="brand-footer">CMS Systems — Smarter tools. Easy integration. Better results.</div>
+
+      {scanMode === 'license' && (
+        <BarcodeScanner
+          title="Scan Driver's License"
+          hint="Hold the barcode on the back of the license steady inside the frame."
+          onResult={handleLicenseScan}
+          onClose={() => setScanMode(null)}
+        />
+      )}
+      {scanMode === 'disk' && (
+        <BarcodeScanner
+          title="Scan License Disk"
+          hint="Hold the vehicle license disk barcode steady inside the frame."
+          onResult={handleDiskScan}
+          onClose={() => setScanMode(null)}
+        />
+      )}
+
+      <div className={`toast ${toastMsg ? 'show' : ''}`}>{toastMsg}</div>
     </div>
   );
 }
