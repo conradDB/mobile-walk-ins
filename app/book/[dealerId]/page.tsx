@@ -3,16 +3,17 @@
 import { useEffect, useState } from 'react';
 import Header from '../../components/Header';
 
+const DEFAULT_TIME = '08:00';
+
 function defaultDate() {
   return new Date().toISOString().slice(0, 10);
-}
-function defaultTime() {
-  const now = new Date();
-  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 }
 
 export default function KioskPage({ params }: { params: { dealerId: string } }) {
   const dealerId = params.dealerId;
+
+  const [dealerName, setDealerName] = useState('');
+  const [dealerLogo, setDealerLogo] = useState<string | null>(null);
 
   const [title, setTitle] = useState('Mr');
   const [firstName, setFirstName] = useState('');
@@ -24,7 +25,6 @@ export default function KioskPage({ params }: { params: { dealerId: string } }) 
   const [odoMeter, setOdoMeter] = useState('');
   const [briefDescription, setBriefDescription] = useState('');
   const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
   const [errMsg, setErrMsg] = useState('');
@@ -32,8 +32,16 @@ export default function KioskPage({ params }: { params: { dealerId: string } }) 
 
   useEffect(() => {
     setDate(defaultDate());
-    setTime(defaultTime());
-  }, []);
+    fetch(`/api/dealers/${dealerId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.dealer) {
+          setDealerName(data.dealer.name);
+          setDealerLogo(data.dealer.logo_url || null);
+        }
+      })
+      .catch(() => {});
+  }, [dealerId]);
 
   function resetForm() {
     setTitle('Mr');
@@ -46,21 +54,20 @@ export default function KioskPage({ params }: { params: { dealerId: string } }) 
     setOdoMeter('');
     setBriefDescription('');
     setDate(defaultDate());
-    setTime(defaultTime());
     setErrMsg('');
     setResult(null);
   }
 
   async function submit() {
     setErrMsg('');
-    const required = { firstName, lastName, contactNumber, make, registration, briefDescription, date, time };
+    const required = { firstName, lastName, contactNumber, make, registration, briefDescription, date };
     const missing = Object.entries(required).filter(([, v]) => !v);
     if (missing.length) {
       setErrMsg('Please fill in all required fields before booking the vehicle in.');
       return;
     }
 
-    const dtScheduled = new Date(`${date}T${time}:00`).toISOString();
+    const dtScheduled = new Date(`${date}T${DEFAULT_TIME}:00`).toISOString();
 
     setSubmitting(true);
     try {
@@ -96,7 +103,12 @@ export default function KioskPage({ params }: { params: { dealerId: string } }) 
 
   return (
     <>
-      <Header eyebrow="Counter Kiosk" title="Walk-In Booking" />
+      <Header
+        eyebrow="Counter Kiosk"
+        title="Workshop Booking"
+        logo={dealerLogo || undefined}
+        logoAlt={dealerLogo ? dealerName : 'CMS Systems'}
+      />
 
       <div className="wrap">
         {!result && (
@@ -162,13 +174,9 @@ export default function KioskPage({ params }: { params: { dealerId: string } }) 
                   placeholder="e.g. 15 000 km Service"
                 />
               </div>
-              <div className="field">
+              <div className="field full">
                 <label>Date</label>
                 <input value={date} onChange={(e) => setDate(e.target.value)} type="date" />
-              </div>
-              <div className="field">
-                <label>Time</label>
-                <input value={time} onChange={(e) => setTime(e.target.value)} type="time" />
               </div>
             </div>
 

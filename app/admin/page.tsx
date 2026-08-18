@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Header from '../components/Header';
 
-type Dealer = { id: string; name: string; created_at: string };
+type Dealer = { id: string; name: string; logo_url: string | null; created_at: string };
 
 export default function AdminPage() {
   const [dealers, setDealers] = useState<Dealer[]>([]);
@@ -15,6 +15,8 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [origin, setOrigin] = useState('');
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -84,6 +86,43 @@ export default function AdminPage() {
     }
   }
 
+  async function uploadLogo(id: string, file: File) {
+    setUploadingId(id);
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      const res = await fetch(`/api/dealers/${id}/logo`, { method: 'POST', body });
+      const data = await res.json();
+      if (!res.ok) {
+        toast(data.error || 'Could not upload logo');
+        return;
+      }
+      setDealers((prev) => prev.map((d) => (d.id === id ? { ...d, logo_url: data.dealer.logo_url } : d)));
+      toast('Logo updated');
+    } catch (e) {
+      toast('Network error while uploading');
+    } finally {
+      setUploadingId(null);
+    }
+  }
+
+  async function removeLogo(id: string) {
+    setUploadingId(id);
+    try {
+      const res = await fetch(`/api/dealers/${id}/logo`, { method: 'DELETE' });
+      if (!res.ok) {
+        toast('Could not remove logo');
+        return;
+      }
+      setDealers((prev) => prev.map((d) => (d.id === id ? { ...d, logo_url: null } : d)));
+      toast('Logo removed');
+    } catch (e) {
+      toast('Network error while removing logo');
+    } finally {
+      setUploadingId(null);
+    }
+  }
+
   function linkFor(id: string) {
     return `${origin}/book/${id}`;
   }
@@ -141,10 +180,38 @@ export default function AdminPage() {
           {!loading &&
             dealers.map((d) => (
               <div className="dealer-row" key={d.id}>
+                <img
+                  className="dealer-logo"
+                  src={d.logo_url || '/cms-logo-icon.png'}
+                  alt={`${d.name} logo`}
+                />
                 <div className="info">
                   <div className="name">{d.name}</div>
                   <div className="link mono">{linkFor(d.id)}</div>
                 </div>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  style={{ display: 'none' }}
+                  ref={(el) => { fileInputs.current[d.id] = el; }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadLogo(d.id, file);
+                    e.target.value = '';
+                  }}
+                />
+                <button
+                  className="row-btn"
+                  disabled={uploadingId === d.id}
+                  onClick={() => fileInputs.current[d.id]?.click()}
+                >
+                  {uploadingId === d.id ? 'Uploading…' : d.logo_url ? 'Change Logo' : 'Upload Logo'}
+                </button>
+                {d.logo_url && (
+                  <button className="row-btn" disabled={uploadingId === d.id} onClick={() => removeLogo(d.id)}>
+                    Reset to CMS
+                  </button>
+                )}
                 <button className="row-btn primary" onClick={() => copyLink(d.id)}>
                   Copy Link
                 </button>

@@ -71,7 +71,7 @@ a { color: var(--blue); }
   top: 0;
   z-index: 40;
 }
-.bar .logo { height: 30px; width: auto; display: block; }
+.bar .logo { height: 30px; width: auto; max-width: 140px; object-fit: contain; display: block; flex-shrink: 0; }
 .bar-title .eyebrow {
   font-size: 11px;
   letter-spacing: .14em;
@@ -252,6 +252,10 @@ input.field-error { border-color: var(--red); box-shadow: 0 0 0 4px rgba(253, 69
 .dealer-row .info { flex: 1; min-width: 220px; }
 .dealer-row .name { font-weight: 700; font-size: 15px; color: var(--ink); }
 .dealer-row .link { font-size: 12px; color: var(--blue); margin-top: 6px; word-break: break-all; }
+.dealer-logo {
+  width: 40px; height: 40px; border-radius: 8px; object-fit: contain;
+  background: var(--paper); border: 1px solid var(--border); padding: 4px; flex-shrink: 0;
+}
 
 .row-btn {
   padding: 10px 14px;

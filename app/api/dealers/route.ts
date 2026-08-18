@@ -5,7 +5,7 @@ export async function GET() {
   const supabaseAdmin = getSupabaseAdmin();
   const { data, error } = await supabaseAdmin
     .from('dealers')
-    .select('id,name,created_at')
+    .select('id,name,logo_url,created_at')
     .order('created_at', { ascending: false });
 
   if (error) {
