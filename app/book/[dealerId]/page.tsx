@@ -3,6 +3,13 @@ import { isUuid } from '../../../lib/dealers';
 import Header from '../../components/Header';
 import BookingForm from './BookingForm';
 
+// Supabase-js's queries run over fetch, which Next.js caches indefinitely
+// by default inside Server Components. Without opting out, dealer logo/
+// colour edits would keep serving stale data until the next deploy.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 type DealerBrand = {
   name: string;
   logo_url: string | null;
