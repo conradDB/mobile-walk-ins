@@ -377,17 +377,18 @@ input.field-error { border-color: var(--red); box-shadow: 0 0 0 4px rgba(253, 69
 .scan-row { display: flex; gap: 10px; margin-bottom: 4px; }
 .scan-btn {
   flex: 1;
-  min-height: 46px;
+  min-height: 32px;
+  padding: 6px 10px;
   border-radius: var(--radius-sm);
   border: 1.5px dashed var(--border-strong);
   background: var(--paper);
   color: var(--blue);
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   transition: background .15s var(--ease), border-color .15s var(--ease);
 }
 .scan-btn:hover { background: #fff; border-color: var(--blue); }
@@ -396,46 +397,51 @@ input.field-error { border-color: var(--red); box-shadow: 0 0 0 4px rgba(253, 69
 .scanner-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(46, 46, 46, .78);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: #000;
   z-index: 60;
-  padding: 20px;
+  overflow: hidden;
 }
-.scanner-card {
-  background: #fff;
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  max-width: 480px;
+.scanner-video {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .35);
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
-.scanner-header {
+.scanner-frame {
+  position: absolute;
+  /* Wide + short: a PDF417 symbol is much wider than it is tall, so the
+     scan frame should match that shape rather than a square. */
+  left: 6%;
+  right: 6%;
+  top: 40%;
+  bottom: 40%;
+  border: 3px solid var(--turquoise);
+  border-radius: 12px;
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, .5);
+  pointer-events: none;
+}
+.scanner-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  padding: max(16px, env(safe-area-inset-top)) 16px 16px;
+  background: linear-gradient(rgba(0, 0, 0, .65), rgba(0, 0, 0, 0));
 }
-.scanner-header h3 { font-size: 16px; color: var(--blue); margin-bottom: 3px; }
-.scanner-header .hint { margin: 0; }
-.scanner-video-wrap {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  background: #000;
-}
-.scanner-video { width: 100%; height: 100%; object-fit: cover; display: block; }
-.scanner-frame {
+.scanner-topbar h3 { font-size: 16px; color: #fff; margin-bottom: 3px; }
+.scanner-topbar .hint { margin: 0; color: rgba(255, 255, 255, .85); }
+.scanner-topbar .row-btn { flex-shrink: 0; }
+.scanner-error {
   position: absolute;
-  inset: 14% 8%;
-  border: 2.5px solid var(--turquoise);
-  border-radius: 10px;
-  box-shadow: 0 0 0 2000px rgba(0, 0, 0, .35);
-  pointer-events: none;
+  left: 16px;
+  right: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 @media (max-width: 520px) {

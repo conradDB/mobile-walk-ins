@@ -25,8 +25,19 @@ export default function BarcodeScanner({
       try {
         const { BrowserPDF417Reader } = await import('@zxing/browser');
         const reader = new BrowserPDF417Reader();
-        const controls = await reader.decodeFromVideoDevice(
-          undefined,
+        const controls = await reader.decodeFromConstraints(
+          {
+            audio: false,
+            video: {
+              facingMode: { ideal: 'environment' },
+              // PDF417 is dense — a low-res stream (browsers often default to
+              // ~640x480) stretched across a large preview looks blurry and
+              // won't decode. Ask for the highest resolution the camera has.
+              width: { ideal: 3840 },
+              height: { ideal: 2160 },
+              advanced: [{ focusMode: 'continuous' } as unknown as MediaTrackConstraintSet],
+            },
+          },
           videoRef.current ?? undefined,
           (result, err) => {
             if (cancelled) return;
@@ -67,22 +78,18 @@ export default function BarcodeScanner({
 
   return (
     <div className="scanner-overlay">
-      <div className="scanner-card">
-        <div className="scanner-header">
-          <div>
-            <h3>{title}</h3>
-            <p className="hint">{hint}</p>
-          </div>
-          <button className="row-btn" onClick={onClose}>
-            Cancel
-          </button>
+      <video ref={videoRef} className="scanner-video" muted playsInline />
+      <div className="scanner-frame" />
+      <div className="scanner-topbar">
+        <div>
+          <h3>{title}</h3>
+          <p className="hint">{hint}</p>
         </div>
-        <div className="scanner-video-wrap">
-          <video ref={videoRef} className="scanner-video" muted playsInline />
-          <div className="scanner-frame" />
-        </div>
-        {error && <div className="msg err">{error}</div>}
+        <button className="row-btn" onClick={onClose}>
+          Cancel
+        </button>
       </div>
+      {error && <div className="msg err scanner-error">{error}</div>}
     </div>
   );
 }
