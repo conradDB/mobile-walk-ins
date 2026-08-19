@@ -343,6 +343,38 @@ input.field-error { border-color: var(--red); box-shadow: 0 0 0 4px rgba(253, 69
 .switch input:checked + .switch-slider::before { transform: translateX(14px); }
 .switch input:focus-visible + .switch-slider { outline: 2.5px solid var(--turquoise); outline-offset: 2px; }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .6);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-panel {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 26px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.qr-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.qr-frame canvas, .qr-frame svg { display: block; max-width: 100%; height: auto; }
+.modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+.modal-actions .row-btn { flex: 1; min-height: 40px; font-size: 13px; }
+
 .row-btn {
   padding: 6px 10px;
   border-radius: var(--radius-sm);

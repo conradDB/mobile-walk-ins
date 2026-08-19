@@ -26,7 +26,10 @@ export default function AdminPage() {
   const [origin, setOrigin] = useState('');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [qrDealer, setQrDealer] = useState<Dealer | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const qrContainerRef = useRef<HTMLDivElement | null>(null);
+  const qrCodeRef = useRef<any>(null);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -185,6 +188,41 @@ export default function AdminPage() {
     return `${origin}/book/${d.slug || d.id}`;
   }
 
+  useEffect(() => {
+    if (!qrDealer || !qrContainerRef.current) return;
+    let cancelled = false;
+    qrContainerRef.current.innerHTML = '';
+
+    (async () => {
+      const { default: QRCodeStyling } = await import('qr-code-styling');
+      if (cancelled || !qrContainerRef.current) return;
+      qrCodeRef.current = new QRCodeStyling({
+        width: 320,
+        height: 320,
+        type: 'canvas',
+        data: linkFor(qrDealer),
+        image: qrDealer.logo_url || '/cms-logo-icon.png',
+        margin: 8,
+        qrOptions: { errorCorrectionLevel: 'H' },
+        dotsOptions: { type: 'rounded', color: '#000000' },
+        backgroundOptions: { color: '#ffffff' },
+        cornersSquareOptions: { type: 'extra-rounded', color: '#000000' },
+        cornersDotOptions: { type: 'dot', color: '#000000' },
+        imageOptions: { crossOrigin: 'anonymous', margin: 6, imageSize: 0.4, hideBackgroundDots: true },
+      });
+      qrCodeRef.current.append(qrContainerRef.current);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [qrDealer]);
+
+  function downloadQr() {
+    if (!qrDealer || !qrCodeRef.current) return;
+    qrCodeRef.current.download({ name: qrDealer.slug || qrDealer.id, extension: 'png' });
+  }
+
   async function copyLink(d: Dealer) {
     try {
       await navigator.clipboard.writeText(linkFor(d));
@@ -308,6 +346,9 @@ export default function AdminPage() {
                 <button className="row-btn primary" onClick={() => copyLink(d)}>
                   Copy Link
                 </button>
+                <button className="row-btn" onClick={() => setQrDealer(d)}>
+                  QR Code
+                </button>
                 <a className="row-btn" href={`/book/${d.slug || d.id}`} target="_blank" rel="noreferrer">
                   Open
                 </a>
@@ -335,6 +376,26 @@ export default function AdminPage() {
 
         <div className="brand-footer">CMS Systems — Smarter tools. Easy integration. Better results.</div>
       </div>
+
+      {qrDealer && (
+        <div className="modal-overlay" onClick={() => setQrDealer(null)}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: 16, marginBottom: 2 }}>{qrDealer.name}</h3>
+            <p className="hint mono" style={{ marginBottom: 16, wordBreak: 'break-all' }}>
+              {linkFor(qrDealer)}
+            </p>
+            <div className="qr-frame" ref={qrContainerRef} />
+            <div className="modal-actions">
+              <button className="row-btn primary" onClick={downloadQr}>
+                Download PNG
+              </button>
+              <button className="row-btn" onClick={() => setQrDealer(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className={`toast ${toastMsg ? 'show' : ''}`}>{toastMsg}</div>
     </>
