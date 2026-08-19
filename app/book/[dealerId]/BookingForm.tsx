@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import BarcodeScanner from './BarcodeScanner';
 import { scanDriverLicence } from '../../../lib/sadl';
-import { readVehicleDisk, debugDumpDisk } from '../../../lib/vehicleDisk';
+import { readVehicleDisk } from '../../../lib/vehicleDisk';
 
 const DEFAULT_TIME = '08:00';
 
@@ -29,7 +29,6 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
 
   const [scanMode, setScanMode] = useState<'license' | 'disk' | null>(null);
   const [toastMsg, setToastMsg] = useState('');
-  const [diskDebug, setDiskDebug] = useState<string | null>(null);
 
   useEffect(() => {
     setDate(defaultDate());
@@ -69,7 +68,6 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
 
   function handleDiskScan(rawBytes: Uint8Array) {
     setScanMode(null);
-    setDiskDebug(debugDumpDisk(rawBytes));
     const diskResult = readVehicleDisk(rawBytes);
 
     let filledAny = false;
@@ -109,16 +107,6 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
         ? 'Vehicle disk scanned — Make, Model and Registration filled in'
         : 'Vehicle disk scanned — details added to description'
     );
-  }
-
-  async function copyDiskDebug() {
-    if (!diskDebug) return;
-    try {
-      await navigator.clipboard.writeText(diskDebug);
-      toast('Copied — paste it in the chat');
-    } catch {
-      toast('Could not copy — select the text manually');
-    }
   }
 
   const requiredFields = {
@@ -293,27 +281,6 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
           onResult={handleDiskScan}
           onClose={() => setScanMode(null)}
         />
-      )}
-
-      {diskDebug && (
-        <div className="debug-overlay">
-          <div className="debug-panel">
-            <h3>Disk scan raw data</h3>
-            <p className="hint">
-              Temporary debug view so we can see exactly what the disk barcode contains — copy this
-              and send it over so the disk scanner can be taught to fill in Make/Model/Registration.
-            </p>
-            <textarea readOnly value={diskDebug} onFocus={(e) => e.currentTarget.select()} />
-            <div className="debug-actions">
-              <button className="row-btn primary" onClick={copyDiskDebug}>
-                Copy
-              </button>
-              <button className="row-btn" onClick={() => setDiskDebug(null)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       <div className={`toast ${toastMsg ? 'show' : ''}`}>{toastMsg}</div>
