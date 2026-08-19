@@ -253,7 +253,7 @@ export default function AdminPage() {
         right={<span className="pill">{dealers.length} {dealers.length === 1 ? 'dealer' : 'dealers'}</span>}
       />
 
-      <div className="wrap">
+      <div className="wrap admin-wrap">
         <div className="card">
           <h3 style={{ fontSize: 16, marginBottom: 4 }}>Add a Dealer</h3>
           <p className="hint" style={{ marginBottom: 16 }}>
