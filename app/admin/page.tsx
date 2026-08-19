@@ -196,19 +196,23 @@ export default function AdminPage() {
     (async () => {
       const { default: QRCodeStyling } = await import('qr-code-styling');
       if (cancelled || !qrContainerRef.current) return;
+      // Print-resolution QR: dealers stick these on vehicles, so a small
+      // preview-sized canvas would come out blurry blown up that large.
+      // Rendered as SVG (vector — never blurs at any size) at a large base
+      // pixel size, so a rasterized PNG download is still high-res too.
       qrCodeRef.current = new QRCodeStyling({
-        width: 320,
-        height: 320,
-        type: 'canvas',
+        width: 2000,
+        height: 2000,
+        type: 'svg',
         data: linkFor(qrDealer),
         image: qrDealer.logo_url || '/cms-logo-icon.png',
-        margin: 8,
+        margin: 50,
         qrOptions: { errorCorrectionLevel: 'H' },
         dotsOptions: { type: 'rounded', color: '#000000' },
         backgroundOptions: { color: '#ffffff' },
         cornersSquareOptions: { type: 'extra-rounded', color: '#000000' },
         cornersDotOptions: { type: 'dot', color: '#000000' },
-        imageOptions: { crossOrigin: 'anonymous', margin: 6, imageSize: 0.4, hideBackgroundDots: true },
+        imageOptions: { crossOrigin: 'anonymous', margin: 38, imageSize: 0.4, hideBackgroundDots: true },
       });
       qrCodeRef.current.append(qrContainerRef.current);
     })();
@@ -218,9 +222,14 @@ export default function AdminPage() {
     };
   }, [qrDealer]);
 
-  function downloadQr() {
+  function downloadQrPng() {
     if (!qrDealer || !qrCodeRef.current) return;
     qrCodeRef.current.download({ name: qrDealer.slug || qrDealer.id, extension: 'png' });
+  }
+
+  function downloadQrSvg() {
+    if (!qrDealer || !qrCodeRef.current) return;
+    qrCodeRef.current.download({ name: qrDealer.slug || qrDealer.id, extension: 'svg' });
   }
 
   async function copyLink(d: Dealer) {
@@ -385,11 +394,20 @@ export default function AdminPage() {
               {linkFor(qrDealer)}
             </p>
             <div className="qr-frame" ref={qrContainerRef} />
+            <p className="hint" style={{ marginTop: 10 }}>
+              High-resolution — safe to enlarge for vehicle decals. SVG is vector (never blurs at
+              any size); PNG is a 2000×2000px flat image for print tools that don&apos;t accept SVG.
+            </p>
             <div className="modal-actions">
-              <button className="row-btn primary" onClick={downloadQr}>
+              <button className="row-btn primary" onClick={downloadQrSvg}>
+                Download SVG (Vector)
+              </button>
+              <button className="row-btn primary" onClick={downloadQrPng}>
                 Download PNG
               </button>
-              <button className="row-btn" onClick={() => setQrDealer(null)}>
+            </div>
+            <div className="modal-actions">
+              <button className="row-btn" onClick={() => setQrDealer(null)} style={{ flex: 'none', minWidth: 120, margin: '0 auto' }}>
                 Close
               </button>
             </div>
