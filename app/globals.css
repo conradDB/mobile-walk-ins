@@ -85,6 +85,7 @@ a { color: var(--blue); }
   top: 8.73%;
   width: 19.4%;
   height: 81.45%;
+  perspective: 300px;
 }
 .logo-wi-icon {
   position: absolute;
@@ -92,12 +93,12 @@ a { color: var(--blue); }
   width: 100%;
   height: 100%;
   display: block;
-  animation: logo-wi-spin 3s linear infinite;
+  animation: logo-wi-flip 2.2s linear infinite;
   transform-origin: 50% 45%;
 }
-@keyframes logo-wi-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes logo-wi-flip {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .logo-wi-icon { animation: none; }
