@@ -19,6 +19,8 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
   const [registration, setRegistration] = useState('');
+  const [vin, setVin] = useState('');
+  const [engineNumber, setEngineNumber] = useState('');
   const [odoMeter, setOdoMeter] = useState('');
   const [briefDescription, setBriefDescription] = useState('');
   const [date, setDate] = useState('');
@@ -47,6 +49,8 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
     setMake('');
     setModel('');
     setRegistration('');
+    setVin('');
+    setEngineNumber('');
     setOdoMeter('');
     setBriefDescription('');
     setDate(defaultDate());
@@ -83,15 +87,16 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
       setRegistration(diskResult.registration);
       filledAny = true;
     }
-
-    const extras: string[] = [];
-    if (diskResult.vin) extras.push(`VIN: ${diskResult.vin}`);
-    if (diskResult.engineNumber) extras.push(`Engine No: ${diskResult.engineNumber}`);
-    if (extras.length > 0) {
-      setBriefDescription((prev) => (prev ? `${prev} — ${extras.join(', ')}` : extras.join(', ')));
+    if (diskResult.vin) {
+      setVin(diskResult.vin);
+      filledAny = true;
+    }
+    if (diskResult.engineNumber) {
+      setEngineNumber(diskResult.engineNumber);
+      filledAny = true;
     }
 
-    if (!filledAny && extras.length === 0) {
+    if (!filledAny) {
       if (diskResult.isPlainText) {
         const snippet = diskResult.rawText.replace(/\s+/g, ' ').trim().slice(0, 120);
         if (snippet) {
@@ -102,11 +107,7 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
       return;
     }
 
-    toast(
-      filledAny
-        ? 'Vehicle disk scanned — Make, Model and Registration filled in'
-        : 'Vehicle disk scanned — details added to description'
-    );
+    toast('Vehicle disk scanned — details filled in');
   }
 
   const requiredFields = {
@@ -132,6 +133,19 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
 
     const dtScheduled = new Date(`${date}T${DEFAULT_TIME}:00`).toISOString();
 
+    // The booking API has no dedicated VIN/Engine Number fields, so they ride
+    // along inside Brief Description for the API call only — the form itself
+    // keeps them as separate, editable fields.
+    const extras: string[] = [];
+    if (vin) extras.push(`VIN: ${vin}`);
+    if (engineNumber) extras.push(`Engine No: ${engineNumber}`);
+    const descriptionForApi =
+      extras.length > 0
+        ? briefDescription
+          ? `${briefDescription} — ${extras.join(', ')}`
+          : extras.join(', ')
+        : briefDescription;
+
     setSubmitting(true);
     try {
       const res = await fetch('/api/book', {
@@ -140,7 +154,7 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
         body: JSON.stringify({
           dealerId,
           dtScheduled,
-          briefDescription,
+          briefDescription: descriptionForApi,
           make,
           model,
           registration,
@@ -226,6 +240,24 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
             <div className="field">
               <label>Odometer (km)</label>
               <input value={odoMeter} onChange={(e) => setOdoMeter(e.target.value)} type="number" min="0" placeholder="45000" />
+            </div>
+            <div className="field">
+              <label>VIN</label>
+              <input
+                value={vin}
+                onChange={(e) => setVin(e.target.value)}
+                placeholder="AHTKFAAG900643247"
+                style={{ textTransform: 'uppercase' }}
+              />
+            </div>
+            <div className="field">
+              <label>Engine Number</label>
+              <input
+                value={engineNumber}
+                onChange={(e) => setEngineNumber(e.target.value)}
+                placeholder="2ZR6D71820"
+                style={{ textTransform: 'uppercase' }}
+              />
             </div>
           </div>
 
