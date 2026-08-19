@@ -251,6 +251,7 @@ export default function AdminPage() {
         eyebrow="Workshop Bookings"
         title="Dealer Setup"
         right={<span className="pill">{dealers.length} {dealers.length === 1 ? 'dealer' : 'dealers'}</span>}
+        animateIcon
       />
 
       <div className="wrap admin-wrap">

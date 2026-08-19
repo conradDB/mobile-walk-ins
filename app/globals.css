@@ -72,6 +72,49 @@ a { color: var(--blue); }
   z-index: 40;
 }
 .bar .logo { height: 30px; width: auto; max-width: 140px; object-fit: contain; display: block; flex-shrink: 0; }
+
+/* Admin-only: the "wi" AI mark gets a living pulse + a slow rotating
+   glow ring behind it. Coordinates are the wi icon's exact pixel bbox
+   (788,24)-(982,248) expressed as % of the full 1000x275 logo canvas,
+   so the overlay lines up with the hole punched in cms-logo-no-icon.png. */
+.logo-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+.logo-wrap .logo { flex-shrink: 0; }
+.logo-wi-slot {
+  position: absolute;
+  left: 78.8%;
+  top: 8.73%;
+  width: 19.4%;
+  height: 81.45%;
+}
+.logo-wi-ring {
+  position: absolute;
+  inset: 0 0 13.4% 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #FD4545, #7B2FF7, #00AEED, #EC1E79, #FD4545);
+  filter: blur(3px);
+  opacity: .55;
+  animation: logo-wi-spin 4.5s linear infinite;
+}
+.logo-wi-icon {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  animation: logo-wi-pulse 2.4s ease-in-out infinite;
+  transform-origin: 50% 40%;
+}
+@keyframes logo-wi-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+@keyframes logo-wi-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-wi-ring, .logo-wi-icon { animation: none; }
+}
 .bar.logo-only { justify-content: center; padding: 18px 24px; }
 .bar.logo-only .logo { height: 44px; max-width: 220px; }
 .bar-title .eyebrow {
