@@ -19,7 +19,7 @@
   --radius-sm: 8px;
   --radius: 12px;
   --radius-lg: 16px;
-  --control-h: 52px;
+  --control-h: 42px;
   --shadow-sm: 0 1px 2px rgba(46, 46, 46, .05);
   --shadow-md: 0 8px 24px rgba(37, 52, 122, .08);
   --ease: cubic-bezier(.2, .7, .3, 1);
@@ -94,13 +94,13 @@ a { color: var(--blue); }
   letter-spacing: .01em;
 }
 
-.wrap { max-width: 760px; margin: 0 auto; padding: 32px 20px 64px; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 20px 20px 48px; }
 
 .card {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 28px 26px;
+  padding: 20px 22px;
   box-shadow: var(--shadow-sm);
 }
 
@@ -110,8 +110,8 @@ a { color: var(--blue); }
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--blue);
-  margin: 30px 0 16px;
-  padding-top: 20px;
+  margin: 18px 0 10px;
+  padding-top: 12px;
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -119,24 +119,24 @@ a { color: var(--blue); }
 }
 .section-label:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
 
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .field.full { grid-column: 1 / -1; }
 
 label {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--grey);
-  margin-bottom: 7px;
+  margin-bottom: 4px;
 }
 
 input, select {
   width: 100%;
   min-height: var(--control-h);
-  padding: 0 16px;
+  padding: 0 14px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--border);
-  font-size: 16px;
+  font-size: 15px;
   background: #fff;
   color: var(--ink);
   transition: border-color .15s var(--ease), box-shadow .15s var(--ease);
@@ -171,13 +171,13 @@ input.field-error { border-color: var(--red); box-shadow: 0 0 0 4px rgba(253, 69
 
 .cta {
   width: 100%;
-  margin-top: 30px;
-  min-height: 58px;
+  margin-top: 20px;
+  min-height: 48px;
   border: none;
   border-radius: var(--radius-sm);
   background: var(--blue);
   color: #fff;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   transition: background .15s var(--ease), transform .1s var(--ease);
   box-shadow: var(--shadow-md);
