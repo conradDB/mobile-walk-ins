@@ -71,18 +71,44 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
     setScanMode(null);
     setDiskDebug(debugDumpDisk(rawBytes));
     const diskResult = readVehicleDisk(rawBytes);
+
+    let filledAny = false;
+    if (diskResult.make) {
+      setMake(diskResult.make);
+      filledAny = true;
+    }
+    if (diskResult.model) {
+      setModel(diskResult.model);
+      filledAny = true;
+    }
+    if (diskResult.registration) {
+      setRegistration(diskResult.registration);
+      filledAny = true;
+    }
+
     const extras: string[] = [];
     if (diskResult.vin) extras.push(`VIN: ${diskResult.vin}`);
-    if (diskResult.isPlainText) {
-      const snippet = diskResult.rawText.replace(/\s+/g, ' ').trim().slice(0, 120);
-      if (snippet && !diskResult.vin) extras.push(`Disk data: ${snippet}`);
+    if (diskResult.engineNumber) extras.push(`Engine No: ${diskResult.engineNumber}`);
+    if (extras.length > 0) {
+      setBriefDescription((prev) => (prev ? `${prev} — ${extras.join(', ')}` : extras.join(', ')));
     }
-    if (extras.length === 0) {
+
+    if (!filledAny && extras.length === 0) {
+      if (diskResult.isPlainText) {
+        const snippet = diskResult.rawText.replace(/\s+/g, ' ').trim().slice(0, 120);
+        if (snippet) {
+          setBriefDescription((prev) => (prev ? `${prev} — Disk data: ${snippet}` : `Disk data: ${snippet}`));
+        }
+      }
       toast('Could not automatically read the disk — enter vehicle details manually');
       return;
     }
-    setBriefDescription((prev) => (prev ? `${prev} — ${extras.join(', ')}` : extras.join(', ')));
-    toast('Vehicle disk scanned — details added to description');
+
+    toast(
+      filledAny
+        ? 'Vehicle disk scanned — Make, Model and Registration filled in'
+        : 'Vehicle disk scanned — details added to description'
+    );
   }
 
   async function copyDiskDebug() {
