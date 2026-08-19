@@ -95,7 +95,7 @@ a { color: var(--blue); }
 }
 
 .wrap { max-width: 760px; margin: 0 auto; padding: 20px 20px 48px; }
-.wrap.admin-wrap { max-width: 1500px; }
+.wrap.admin-wrap { max-width: 1000px; }
 
 .card {
   background: var(--panel);
