@@ -11,7 +11,17 @@ function defaultDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default function BookingForm({ dealerId }: { dealerId: string }) {
+function Req() {
+  return <span className="req">*</span>;
+}
+
+export default function BookingForm({
+  dealerId,
+  scanningEnabled = true,
+}: {
+  dealerId: string;
+  scanningEnabled?: boolean;
+}) {
   const [title, setTitle] = useState('Mr');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -118,6 +128,7 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
     make,
     model,
     registration,
+    vin,
     odoMeter,
     briefDescription,
     date,
@@ -183,14 +194,16 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
       {!result && (
         <div className="card">
           <div className="section-label">Client</div>
-          <div className="scan-row">
-            <button className="scan-btn" onClick={() => setScanMode('license')}>
-              ⎙ Scan Driver&apos;s License
-            </button>
-          </div>
+          {scanningEnabled && (
+            <div className="scan-row">
+              <button className="scan-btn" onClick={() => setScanMode('license')}>
+                ⎙ Scan Driver&apos;s License
+              </button>
+            </div>
+          )}
           <div className="grid">
             <div className="field">
-              <label>Title</label>
+              <label>Title <Req /></label>
               <select value={title} onChange={(e) => setTitle(e.target.value)}>
                 <option value="Mr">Mr</option>
                 <option value="Mrs">Mrs</option>
@@ -200,36 +213,38 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
               </select>
             </div>
             <div className="field">
-              <label>Contact Number</label>
+              <label>Contact Number <Req /></label>
               <input value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} type="tel" placeholder="082 000 0000" />
             </div>
             <div className="field">
-              <label>First Name</label>
+              <label>First Name <Req /></label>
               <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Thabo" />
             </div>
             <div className="field">
-              <label>Last Name</label>
+              <label>Last Name <Req /></label>
               <input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Nkosi" />
             </div>
           </div>
 
           <div className="section-label">Vehicle</div>
-          <div className="scan-row">
-            <button className="scan-btn" onClick={() => setScanMode('disk')}>
-              ⎙ Scan License Disk
-            </button>
-          </div>
+          {scanningEnabled && (
+            <div className="scan-row">
+              <button className="scan-btn" onClick={() => setScanMode('disk')}>
+                ⎙ Scan License Disk
+              </button>
+            </div>
+          )}
           <div className="grid">
             <div className="field">
-              <label>Make</label>
+              <label>Make <Req /></label>
               <input value={make} onChange={(e) => setMake(e.target.value)} placeholder="Toyota" />
             </div>
             <div className="field">
-              <label>Model</label>
+              <label>Model <Req /></label>
               <input value={model} onChange={(e) => setModel(e.target.value)} placeholder="Hilux" />
             </div>
             <div className="field">
-              <label>Registration</label>
+              <label>Registration <Req /></label>
               <input
                 value={registration}
                 onChange={(e) => setRegistration(e.target.value)}
@@ -238,11 +253,11 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
               />
             </div>
             <div className="field">
-              <label>Odometer (km)</label>
+              <label>Odometer (km) <Req /></label>
               <input value={odoMeter} onChange={(e) => setOdoMeter(e.target.value)} type="number" min="0" placeholder="45000" />
             </div>
             <div className="field">
-              <label>VIN</label>
+              <label>VIN <Req /></label>
               <input
                 value={vin}
                 onChange={(e) => setVin(e.target.value)}
@@ -264,7 +279,7 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
           <div className="section-label">Appointment</div>
           <div className="grid">
             <div className="field full">
-              <label>Brief Description</label>
+              <label>Brief Description <Req /></label>
               <input
                 value={briefDescription}
                 onChange={(e) => setBriefDescription(e.target.value)}
@@ -272,7 +287,7 @@ export default function BookingForm({ dealerId }: { dealerId: string }) {
               />
             </div>
             <div className="field full">
-              <label>Date</label>
+              <label>Date <Req /></label>
               <div className="date-field-clip">
                 <input value={date} onChange={(e) => setDate(e.target.value)} type="date" />
               </div>

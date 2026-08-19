@@ -10,6 +10,7 @@ type Dealer = {
   logo_url: string | null;
   primary_color: string | null;
   secondary_color: string | null;
+  scanning_enabled: boolean;
   created_at: string;
 };
 
@@ -159,6 +160,27 @@ export default function AdminPage() {
     }
   }
 
+  async function toggleScanning(id: string, enabled: boolean) {
+    setDealers((prev) => prev.map((d) => (d.id === id ? { ...d, scanning_enabled: enabled } : d)));
+    try {
+      const res = await fetch(`/api/dealers/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scanning_enabled: enabled }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDealers((prev) => prev.map((d) => (d.id === id ? { ...d, scanning_enabled: !enabled } : d)));
+        toast(data.error || 'Could not update scanning setting');
+        return;
+      }
+      toast(enabled ? 'Barcode scanning turned on' : 'Barcode scanning turned off');
+    } catch (e) {
+      setDealers((prev) => prev.map((d) => (d.id === id ? { ...d, scanning_enabled: !enabled } : d)));
+      toast('Network error while saving');
+    }
+  }
+
   function linkFor(d: Dealer) {
     return `${origin}/book/${d.slug || d.id}`;
   }
@@ -272,6 +294,17 @@ export default function AdminPage() {
                     onChange={(e) => saveColor(d.id, 'primary_color', e.target.value)}
                   />
                 </span>
+                <label className="scan-toggle" title="Barcode scanning on the kiosk">
+                  <span className="switch">
+                    <input
+                      type="checkbox"
+                      checked={d.scanning_enabled}
+                      onChange={(e) => toggleScanning(d.id, e.target.checked)}
+                    />
+                    <span className="switch-slider" />
+                  </span>
+                  Scan
+                </label>
                 <button className="row-btn primary" onClick={() => copyLink(d)}>
                   Copy Link
                 </button>

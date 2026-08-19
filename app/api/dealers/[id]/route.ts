@@ -13,7 +13,7 @@ export async function GET(
   const supabaseAdmin = getSupabaseAdmin();
   const { data, error } = await supabaseAdmin
     .from('dealers')
-    .select('id,name,slug,logo_url,primary_color,secondary_color,created_at')
+    .select('id,name,slug,logo_url,primary_color,secondary_color,scanning_enabled,created_at')
     .eq(matchColumn(params.id), params.id)
     .single();
 
@@ -29,7 +29,7 @@ export async function PATCH(
 ) {
   const supabaseAdmin = getSupabaseAdmin();
   const body = await req.json().catch(() => ({}));
-  const update: Record<string, string | null> = {};
+  const update: Record<string, string | boolean | null> = {};
 
   for (const key of ['primary_color', 'secondary_color'] as const) {
     if (key in body) {
@@ -44,6 +44,13 @@ export async function PATCH(
     }
   }
 
+  if ('scanning_enabled' in body) {
+    if (typeof body.scanning_enabled !== 'boolean') {
+      return NextResponse.json({ error: 'scanning_enabled must be a boolean' }, { status: 400 });
+    }
+    update.scanning_enabled = body.scanning_enabled;
+  }
+
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
   }
@@ -52,7 +59,7 @@ export async function PATCH(
     .from('dealers')
     .update(update)
     .eq(matchColumn(params.id), params.id)
-    .select('id,name,slug,logo_url,primary_color,secondary_color')
+    .select('id,name,slug,logo_url,primary_color,secondary_color,scanning_enabled')
     .single();
 
   if (error) {

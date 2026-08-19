@@ -14,6 +14,7 @@ type DealerBrand = {
   name: string;
   logo_url: string | null;
   primary_color: string | null;
+  scanning_enabled: boolean;
 };
 
 async function getDealer(dealerId: string): Promise<DealerBrand | null> {
@@ -21,7 +22,7 @@ async function getDealer(dealerId: string): Promise<DealerBrand | null> {
     const supabaseAdmin = getSupabaseAdmin();
     const { data } = await supabaseAdmin
       .from('dealers')
-      .select('name,logo_url,primary_color')
+      .select('name,logo_url,primary_color,scanning_enabled')
       .eq(isUuid(dealerId) ? 'id' : 'slug', dealerId)
       .single();
     return data;
@@ -46,7 +47,7 @@ export default async function KioskPage({ params }: { params: { dealerId: string
         logo={dealer?.logo_url || undefined}
         logoAlt={dealer?.logo_url ? dealer.name : 'CMS Systems'}
       />
-      <BookingForm dealerId={params.dealerId} />
+      <BookingForm dealerId={params.dealerId} scanningEnabled={dealer?.scanning_enabled !== false} />
     </div>
   );
 }
