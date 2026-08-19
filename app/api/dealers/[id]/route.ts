@@ -13,7 +13,7 @@ export async function GET(
   const supabaseAdmin = getSupabaseAdmin();
   const { data, error } = await supabaseAdmin
     .from('dealers')
-    .select('id,name,slug,logo_url,primary_color,secondary_color,scanning_enabled,created_at')
+    .select('id,name,slug,logo_url,primary_color,secondary_color,scanning_enabled,dealer_ref,dealer_floor,created_at')
     .eq(matchColumn(params.id), params.id)
     .single();
 
@@ -51,6 +51,19 @@ export async function PATCH(
     update.scanning_enabled = body.scanning_enabled;
   }
 
+  for (const key of ['dealer_ref', 'dealer_floor'] as const) {
+    if (key in body) {
+      const value = body[key];
+      if (value === null || value === '') {
+        update[key] = null;
+      } else if (typeof value === 'string') {
+        update[key] = value.trim();
+      } else {
+        return NextResponse.json({ error: `${key} must be a string` }, { status: 400 });
+      }
+    }
+  }
+
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
   }
@@ -59,7 +72,7 @@ export async function PATCH(
     .from('dealers')
     .update(update)
     .eq(matchColumn(params.id), params.id)
-    .select('id,name,slug,logo_url,primary_color,secondary_color,scanning_enabled')
+    .select('id,name,slug,logo_url,primary_color,secondary_color,scanning_enabled,dealer_ref,dealer_floor')
     .single();
 
   if (error) {
