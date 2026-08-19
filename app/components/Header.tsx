@@ -23,7 +23,6 @@ export default function Header({
           <span className="logo-wrap">
             <img src="/cms-logo-no-icon.png" alt={logoAlt || 'CMS Systems'} className="logo" />
             <span className="logo-wi-slot" aria-hidden="true">
-              <span className="logo-wi-ring" />
               <img src="/cms-logo-icon-wi.png" alt="" className="logo-wi-icon" />
             </span>
           </span>
