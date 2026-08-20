@@ -15,8 +15,18 @@ type LeadForm = {
   dealers: { name: string; slug: string | null; logo_url: string | null } | null;
 };
 
+type Dealer = {
+  id: string;
+  name: string;
+  dealer_ref: string | null;
+  dealer_floor: string | null;
+};
+
 export default function LeadFormsAdminPage() {
   const [forms, setForms] = useState<LeadForm[]>([]);
+  const [dealers, setDealers] = useState<Dealer[]>([]);
+  const [dealerCodesDraft, setDealerCodesDraft] = useState<Record<string, { ref: string; floor: string }>>({});
+  const [savingDealerId, setSavingDealerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState('');
   const [origin, setOrigin] = useState('');
@@ -27,7 +37,51 @@ export default function LeadFormsAdminPage() {
   useEffect(() => {
     setOrigin(window.location.origin);
     load();
+    loadDealers();
   }, []);
+
+  async function loadDealers() {
+    try {
+      const res = await fetch('/api/dealers');
+      const data = await res.json();
+      const list: Dealer[] = data.dealers || [];
+      setDealers(list);
+      setDealerCodesDraft(
+        Object.fromEntries(list.map((d) => [d.id, { ref: d.dealer_ref || '', floor: d.dealer_floor || '' }]))
+      );
+    } catch {
+      // Non-critical for this page — CMS codes card just won't populate.
+    }
+  }
+
+  async function saveDealerCodes(id: string) {
+    const draft = dealerCodesDraft[id];
+    const dealerRef = (draft?.ref || '').trim();
+    const dealerFloor = (draft?.floor || '').trim();
+    if (!dealerRef || !dealerFloor) {
+      toast('Both DealerRef and DealerFloor are required');
+      return;
+    }
+    setSavingDealerId(id);
+    try {
+      const res = await fetch(`/api/dealers/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dealer_ref: dealerRef, dealer_floor: dealerFloor }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast(data.error || 'Could not save CMS codes');
+        return;
+      }
+      setDealers((prev) => prev.map((d) => (d.id === id ? { ...d, ...data.dealer } : d)));
+      toast('CMS codes saved');
+    } catch {
+      toast('Network error while saving');
+    } finally {
+      setSavingDealerId(null);
+    }
+  }
 
   function toast(msg: string) {
     setToastMsg(msg);
@@ -151,6 +205,47 @@ export default function LeadFormsAdminPage() {
       />
 
       <div className="wrap admin-wrap">
+        <details className="card" style={{ marginBottom: 20 }}>
+          <summary style={{ cursor: 'pointer', fontSize: 16, fontWeight: 700, color: 'var(--blue)' }}>
+            Dealer CMS Codes
+          </summary>
+          <p className="hint" style={{ margin: '10px 0 16px' }}>
+            DealerRef and DealerFloor are provided by CMS and are required before a dealer can have
+            a lead form. Set them here — independent of Workshop Booking Links.
+          </p>
+          <div className="dealer-list">
+            {dealers.map((d) => (
+              <div className="dealer-row" key={d.id}>
+                <div className="info">
+                  <div className="name">{d.name}</div>
+                </div>
+                <input
+                  className="catalog-label-input"
+                  style={{ maxWidth: 140 }}
+                  placeholder="DealerRef"
+                  value={dealerCodesDraft[d.id]?.ref || ''}
+                  onChange={(e) =>
+                    setDealerCodesDraft((prev) => ({ ...prev, [d.id]: { ref: e.target.value, floor: prev[d.id]?.floor || '' } }))
+                  }
+                />
+                <input
+                  className="catalog-label-input"
+                  style={{ maxWidth: 140 }}
+                  placeholder="DealerFloor"
+                  value={dealerCodesDraft[d.id]?.floor || ''}
+                  onChange={(e) =>
+                    setDealerCodesDraft((prev) => ({ ...prev, [d.id]: { ref: prev[d.id]?.ref || '', floor: e.target.value } }))
+                  }
+                />
+                <button className="row-btn primary" onClick={() => saveDealerCodes(d.id)} disabled={savingDealerId === d.id}>
+                  {savingDealerId === d.id ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            ))}
+            {dealers.length === 0 && <div className="empty">No dealers yet.</div>}
+          </div>
+        </details>
+
         <div className="dealer-list">
           {!loading &&
             forms.map((f) => (

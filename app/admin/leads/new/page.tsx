@@ -36,6 +36,8 @@ export default function NewLeadFormPage() {
   const [dealers, setDealers] = useState<Dealer[]>([]);
   const [loadingDealers, setLoadingDealers] = useState(true);
   const [dealerId, setDealerId] = useState('');
+  const [dealerRefInput, setDealerRefInput] = useState('');
+  const [dealerFloorInput, setDealerFloorInput] = useState('');
   const [name, setName] = useState('');
   const [source, setSource] = useState('');
   const [slugTouched, setSlugTouched] = useState(false);
@@ -123,18 +125,35 @@ export default function NewLeadFormPage() {
 
   const [previewValues, setPreviewValues] = useState<Record<string, any>>({});
 
-  const selectedDealer = dealers.find((d) => d.id === dealerId);
-  const dealerReady = !!(selectedDealer?.dealer_ref && selectedDealer?.dealer_floor);
+  function selectDealer(id: string) {
+    setDealerId(id);
+    const d = dealers.find((x) => x.id === id);
+    setDealerRefInput(d?.dealer_ref || '');
+    setDealerFloorInput(d?.dealer_floor || '');
+  }
 
   async function save() {
     if (!dealerId) return toast('Choose a dealer first');
-    if (!dealerReady) return toast('That dealer has no CMS codes set — set them in Workshop admin first');
+    const dealerRef = dealerRefInput.trim();
+    const dealerFloor = dealerFloorInput.trim();
+    if (!dealerRef || !dealerFloor) return toast('Enter this dealer’s DealerRef and DealerFloor');
     if (!name.trim()) return toast('Give the form a name');
     if (!source.trim()) return toast('Enter a Source code (CMS-configured)');
     if (selectedFields.length === 0) return toast('Select at least one field');
 
     setSaving(true);
     try {
+      const dealerRes = await fetch(`/api/dealers/${dealerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dealer_ref: dealerRef, dealer_floor: dealerFloor }),
+      });
+      if (!dealerRes.ok) {
+        const dealerErr = await dealerRes.json().catch(() => ({}));
+        toast(dealerErr.error || 'Could not save this dealer’s CMS codes');
+        return;
+      }
+
       const res = await fetch('/api/lead-forms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -179,20 +198,14 @@ export default function NewLeadFormPage() {
           <div className="grid">
             <div className="field full">
               <label>Dealer <span className="req">*</span></label>
-              <select value={dealerId} onChange={(e) => setDealerId(e.target.value)} disabled={loadingDealers}>
+              <select value={dealerId} onChange={(e) => selectDealer(e.target.value)} disabled={loadingDealers}>
                 <option value="">Select a dealer…</option>
                 {dealers.map((d) => (
-                  <option key={d.id} value={d.id} disabled={!d.dealer_ref || !d.dealer_floor}>
-                    {d.name} {!d.dealer_ref || !d.dealer_floor ? '(needs CMS codes)' : ''}
+                  <option key={d.id} value={d.id}>
+                    {d.name}
                   </option>
                 ))}
               </select>
-              {dealerId && !dealerReady && (
-                <p className="hint" style={{ color: 'var(--red)' }}>
-                  This dealer has no DealerRef/DealerFloor set. Set them from{' '}
-                  <a href="/admin/workshop">Workshop admin</a> first.
-                </p>
-              )}
             </div>
             <div className="field">
               <label>Form Name <span className="req">*</span></label>
@@ -216,6 +229,27 @@ export default function NewLeadFormPage() {
               <p className="hint">The public link will be /leads/{slug || '…'}</p>
             </div>
           </div>
+
+          {dealerId && (
+            <>
+              <div className="section-label">Dealer&apos;s CMS Codes</div>
+              <p className="hint" style={{ marginBottom: 14 }}>
+                DealerRef and DealerFloor are provided by CMS and must match exactly what&apos;s
+                configured on their side. Specific to this dealer, saved when you create the form —
+                shown pre-filled if already set from an earlier lead form.
+              </p>
+              <div className="grid">
+                <div className="field">
+                  <label>DealerRef <span className="req">*</span></label>
+                  <input value={dealerRefInput} onChange={(e) => setDealerRefInput(e.target.value)} placeholder="e.g. 123M" />
+                </div>
+                <div className="field">
+                  <label>DealerFloor <span className="req">*</span></label>
+                  <input value={dealerFloorInput} onChange={(e) => setDealerFloorInput(e.target.value)} placeholder="e.g. USED" />
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="card" style={{ marginTop: 20 }}>

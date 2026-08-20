@@ -11,8 +11,6 @@ type Dealer = {
   primary_color: string | null;
   secondary_color: string | null;
   scanning_enabled: boolean;
-  dealer_ref: string | null;
-  dealer_floor: string | null;
   created_at: string;
 };
 
@@ -29,10 +27,6 @@ export default function WorkshopAdminPage() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [qrDealer, setQrDealer] = useState<Dealer | null>(null);
-  const [cmsCodesDealer, setCmsCodesDealer] = useState<Dealer | null>(null);
-  const [cmsRefInput, setCmsRefInput] = useState('');
-  const [cmsFloorInput, setCmsFloorInput] = useState('');
-  const [savingCmsCodes, setSavingCmsCodes] = useState(false);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const qrContainerRef = useRef<HTMLDivElement | null>(null);
   const qrCodeRef = useRef<any>(null);
@@ -247,42 +241,6 @@ export default function WorkshopAdminPage() {
     }
   }
 
-  function openCmsCodes(d: Dealer) {
-    setCmsCodesDealer(d);
-    setCmsRefInput(d.dealer_ref || '');
-    setCmsFloorInput(d.dealer_floor || '');
-  }
-
-  async function saveCmsCodes() {
-    if (!cmsCodesDealer) return;
-    const dealerRef = cmsRefInput.trim();
-    const dealerFloor = cmsFloorInput.trim();
-    if (!dealerRef || !dealerFloor) {
-      toast('Both DealerRef and DealerFloor are required');
-      return;
-    }
-    setSavingCmsCodes(true);
-    try {
-      const res = await fetch(`/api/dealers/${cmsCodesDealer.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dealer_ref: dealerRef, dealer_floor: dealerFloor }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast(data.error || 'Could not save CMS codes');
-        return;
-      }
-      setDealers((prev) => prev.map((d) => (d.id === cmsCodesDealer.id ? { ...d, ...data.dealer } : d)));
-      toast('CMS codes saved');
-      setCmsCodesDealer(null);
-    } catch (e) {
-      toast('Network error while saving');
-    } finally {
-      setSavingCmsCodes(false);
-    }
-  }
-
   const filteredDealers = dealers.filter((d) =>
     d.name.toLowerCase().includes(query.trim().toLowerCase())
   );
@@ -402,13 +360,6 @@ export default function WorkshopAdminPage() {
                   </span>
                   Scan
                 </label>
-                <button
-                  className={`row-btn ${d.dealer_ref && d.dealer_floor ? '' : 'attention'}`}
-                  onClick={() => openCmsCodes(d)}
-                  title="DealerRef / DealerFloor used by the CMS Lead Injection API"
-                >
-                  {d.dealer_ref && d.dealer_floor ? 'CMS Codes' : 'Set CMS Codes'}
-                </button>
                 <button className="row-btn primary" onClick={() => copyLink(d)}>
                   Copy Link
                 </button>
@@ -466,36 +417,6 @@ export default function WorkshopAdminPage() {
             <div className="modal-actions">
               <button className="row-btn" onClick={() => setQrDealer(null)} style={{ flex: 'none', minWidth: 120, margin: '0 auto' }}>
                 Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {cmsCodesDealer && (
-        <div className="modal-overlay" onClick={() => setCmsCodesDealer(null)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ fontSize: 16, marginBottom: 2 }}>{cmsCodesDealer.name} — CMS Codes</h3>
-            <p className="hint" style={{ marginBottom: 16 }}>
-              DealerRef and DealerFloor are provided by CMS and must match exactly what&apos;s
-              configured on their side. Required before this dealer can have lead submission forms.
-            </p>
-            <div className="grid">
-              <div className="field full">
-                <label>DealerRef</label>
-                <input value={cmsRefInput} onChange={(e) => setCmsRefInput(e.target.value)} placeholder="e.g. 123M" />
-              </div>
-              <div className="field full">
-                <label>DealerFloor</label>
-                <input value={cmsFloorInput} onChange={(e) => setCmsFloorInput(e.target.value)} placeholder="e.g. USED" />
-              </div>
-            </div>
-            <div className="modal-actions">
-              <button className="row-btn primary" onClick={saveCmsCodes} disabled={savingCmsCodes}>
-                {savingCmsCodes ? 'Saving…' : 'Save'}
-              </button>
-              <button className="row-btn" onClick={() => setCmsCodesDealer(null)}>
-                Cancel
               </button>
             </div>
           </div>
