@@ -12,6 +12,8 @@ type LeadForm = {
   fields: unknown[];
   active: boolean;
   created_at: string;
+  leadCount: number;
+  attemptCount: number;
   dealers: { name: string; slug: string | null; logo_url: string | null } | null;
 };
 
@@ -257,6 +259,19 @@ export default function LeadFormsAdminPage() {
                   </div>
                   <div className="link mono" title={linkFor(f)}>{linkFor(f)}</div>
                 </div>
+                <span
+                  className="pill lead-count-pill"
+                  title={
+                    f.attemptCount > f.leadCount
+                      ? `${f.attemptCount} submission attempt${f.attemptCount === 1 ? '' : 's'}, ${f.attemptCount - f.leadCount} failed`
+                      : 'Successful submissions to CMS'
+                  }
+                >
+                  {f.leadCount} {f.leadCount === 1 ? 'lead' : 'leads'}
+                  {f.attemptCount > f.leadCount && (
+                    <span className="lead-count-failed"> ({f.attemptCount - f.leadCount} failed)</span>
+                  )}
+                </span>
                 <label className="scan-toggle" title="Accepting submissions">
                   <span className="switch">
                     <input type="checkbox" checked={f.active} onChange={() => toggleActive(f)} />
@@ -264,6 +279,9 @@ export default function LeadFormsAdminPage() {
                   </span>
                   Active
                 </label>
+                <a className="row-btn" href={`/admin/leads/${f.id}/edit`}>
+                  Edit
+                </a>
                 <button className="row-btn primary" onClick={() => copyLink(f)}>
                   Copy Link
                 </button>

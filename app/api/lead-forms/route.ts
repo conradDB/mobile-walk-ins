@@ -12,7 +12,26 @@ export async function GET() {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ leadForms: data });
+
+  // Attach a per-form submission count so the admin list can show "how many
+  // leads has this actually produced" without a separate round trip. Counted
+  // client-side from the raw rows rather than a Postgres aggregate — simplest
+  // correct thing at this data volume, and keeps failed-vs-successful visible.
+  const { data: submissions } = await supabaseAdmin.from('lead_submissions').select('lead_form_id,cms_status');
+  const counts: Record<string, { success: number; total: number }> = {};
+  for (const s of submissions || []) {
+    const c = (counts[s.lead_form_id] ??= { success: 0, total: 0 });
+    c.total += 1;
+    if (s.cms_status === 'Success') c.success += 1;
+  }
+
+  const leadForms = (data || []).map((f) => ({
+    ...f,
+    leadCount: counts[f.id]?.success || 0,
+    attemptCount: counts[f.id]?.total || 0,
+  }));
+
+  return NextResponse.json({ leadForms });
 }
 
 export async function POST(req: Request) {

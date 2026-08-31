@@ -36,6 +36,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (!name) return NextResponse.json({ error: 'name cannot be empty' }, { status: 400 });
     update.name = name;
   }
+  if ('source' in body) {
+    const source = String(body.source || '').trim();
+    if (!source) return NextResponse.json({ error: 'source cannot be empty' }, { status: 400 });
+    update.source = source;
+  }
+  if ('fields' in body) {
+    if (!Array.isArray(body.fields) || body.fields.length === 0) {
+      return NextResponse.json({ error: 'fields must be a non-empty array' }, { status: 400 });
+    }
+    update.fields = body.fields;
+  }
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });

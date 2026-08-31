@@ -124,6 +124,8 @@ a { color: var(--blue); }
   font-weight: 700;
   letter-spacing: .01em;
 }
+.lead-count-pill { flex-shrink: 0; white-space: nowrap; background: rgba(0, 174, 237, .1); color: var(--blue-dark); }
+.lead-count-failed { color: var(--red); font-weight: 500; }
 
 .wrap { max-width: 760px; margin: 0 auto; padding: 20px 20px 48px; }
 .wrap.admin-wrap { max-width: 1000px; }
